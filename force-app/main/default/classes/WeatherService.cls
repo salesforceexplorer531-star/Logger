@@ -1,32 +1,42 @@
-public class WeatherService {
+public with sharing class WeatherService {
+  private static final String CLASS_NAME = 'WeatherService';
+  private static final String BASE_URL = 'https://api.weatherapi.com/v1/current.json';
+  private static final String API_KEY = 'd2f6468eedc14671bc883059250509';
+
   public static HttpResponse getCurrentWeather(String location) {
     Http http = new Http();
-    HttpRequest request = new HttpRequest();
+    HttpRequest req = new HttpRequest();
+    HttpResponse res;
+    LogWrapper lw = new LogWrapper();
 
-    // Endpoint with API Key and location
+    // Build endpoint with URL encoding
     String endpoint =
-      'https://api.weatherapi.com/v1/current.json?key=d2f6468eedc14671bc883059250509&q=' +
+      BASE_URL +
+      '?key=' +
+      API_KEY +
+      '&q=' +
       EncodingUtil.urlEncode(location, 'UTF-8');
+    req.setEndpoint(endpoint);
+    req.setMethod('GET');
+    req.setTimeout(20000);
 
-    request.setEndpoint(endpoint);
-    request.setMethod('GET');
+    // 🔹 Perform callout
+    res = http.send(req);
 
-    HttpResponse response = http.send(request);
-    Boolean isSuccess = false;
+    // 🔹 Populate and save log
+    lw.populateFromApi(req, res, CLASS_NAME, 'Api');
+    ApiLoggerService.addLog(lw);
+    ApiLoggerService.insertLogs();
 
-    if (response.getStatusCode() == 200) {
-      isSuccess = true;
-
-      // Parse JSON response
-      Map<String, Object> results = (Map<String, Object>) JSON.deserializeUntyped(
-        response.getBody()
+    // 🔹 Handle success
+    if (res.getStatusCode() == 200) {
+      Map<String, Object> json = (Map<String, Object>) JSON.deserializeUntyped(
+        res.getBody()
       );
-      Map<String, Object> locationInfo = (Map<String, Object>) results.get(
+      Map<String, Object> locationInfo = (Map<String, Object>) json.get(
         'location'
       );
-      Map<String, Object> currentWeather = (Map<String, Object>) results.get(
-        'current'
-      );
+      Map<String, Object> current = (Map<String, Object>) json.get('current');
 
       System.debug(
         'Location: ' +
@@ -34,51 +44,15 @@ public class WeatherService {
           ', ' +
           locationInfo.get('country')
       );
-      System.debug('Temperature (C): ' + currentWeather.get('temp_c'));
+      System.debug('Temperature (C): ' + current.get('temp_c'));
       System.debug(
         'Condition: ' +
-        ((Map<String, Object>) currentWeather.get('condition')).get('text')
+        ((Map<String, Object>) current.get('condition')).get('text')
       );
     } else {
-      System.debug(
-        'Weather API call failed. Status: ' + response.getStatusCode()
-      );
+      System.debug('Weather API call failed. Status: ' + res.getStatusCode());
     }
 
-    // Log API call details
-    insertLog(
-      endpoint,
-      'GET',
-      null,
-      response,
-      isSuccess,
-      'WeatherService',
-      'API'
-    );
-
-    return response;
-  }
-
-  // Reuse logging logic
-  private static void insertLog(
-    String endpoint,
-    String method,
-    String requestBody,
-    HttpResponse response,
-    Boolean success,
-    String className,
-    String typeVal
-  ) {
-    Logger__c log = new Logger__c();
-    log.Endpoint__c = endpoint;
-    log.Method__c = method;
-    log.Request_Body__c = requestBody;
-    log.Status_Code__c = response.getStatusCode();
-    log.Response_Body__c = response.getBody();
-    log.Class_Name__c = className;
-    log.Success__c = success;
-    log.Type__c = typeVal;
-
-    insert log;
+    return res;
   }
 }
