@@ -1,72 +1,50 @@
-public class CurrencyExchangeService {
-  // Call the Exchange Rate API
+public with sharing class CurrencyExchangeService {
+  private static final String CLASS_NAME = 'CurrencyExchangeService';
+  private static final String BASE_URL = 'https://v6.exchangerate-api.com/v6/';
+  private static final String API_KEY = 'ca7c3c1dc4f425c2a0ac3eda';
+
   public static HttpResponse getExchangeRates(String baseCurrency) {
     Http http = new Http();
-    HttpRequest request = new HttpRequest();
-    String endpoint =
-      'https://v6.exchangerate-api.com/v6/1247d34e2dad4d71dc9dbaef/latest/' +
-      baseCurrency;
+    HttpRequest req = new HttpRequest();
+    HttpResponse res;
+    LogWrapper lw = new LogWrapper();
 
-    request.setEndpoint(endpoint);
-    request.setMethod('GET');
+    //  Build endpoint
+    String endpoint = BASE_URL + API_KEY + '/latest/' + baseCurrency;
+    req.setEndpoint(endpoint);
+    req.setMethod('GET');
+    req.setTimeout(20000);
 
-    HttpResponse response = http.send(request);
-    Boolean isSuccess = false;
+    //  Perform API callout
+    res = http.send(req);
 
-    if (response.getStatusCode() == 200) {
-      isSuccess = true;
+    //  Log API request and response
+    lw.populateFromApi(req, res, CLASS_NAME, 'API');
+    ApiLoggerService.addLog(lw);
+    ApiLoggerService.insertLogs();
 
-      // Parse JSON response
-      Map<String, Object> results = (Map<String, Object>) JSON.deserializeUntyped(
-        response.getBody()
+    //  Handle successful response
+    if (res.getStatusCode() == 200) {
+      Map<String, Object> result = (Map<String, Object>) JSON.deserializeUntyped(
+        res.getBody()
       );
-      String baseCode = (String) results.get('base_code');
-      Map<String, Object> conversionRates = (Map<String, Object>) results.get(
+      String baseCode = (String) result.get('base_code');
+      Map<String, Object> rates = (Map<String, Object>) result.get(
         'conversion_rates'
       );
 
       System.debug('Base Currency: ' + baseCode);
-      for (String currencyCode : conversionRates.keySet()) {
-        System.debug(currencyCode + ' : ' + conversionRates.get(currencyCode));
+      System.debug('Exchange Rates:');
+
+      for (String currencyCode : rates.keySet()) {
+        System.debug(currencyCode + ' : ' + rates.get(currencyCode));
       }
     } else {
-      System.debug('Callout failed. Status: ' + response.getStatusCode());
+      System.debug(
+        'Currency Exchange API call failed. Status: ' + res.getStatusCode()
+      );
     }
 
-    // Log API call details
-    insertLog(
-      endpoint,
-      'GET',
-      null,
-      response,
-      isSuccess,
-      'CurrencyExchangeService',
-      'API'
-    );
-
-    return response;
-  }
-
-  // Insert record into Logger__c custom object
-  private static void insertLog(
-    String endpoint,
-    String method,
-    String requestBody,
-    HttpResponse response,
-    Boolean success,
-    String className,
-    String typeVal
-  ) {
-    Logger__c log = new Logger__c();
-    log.Endpoint__c = endpoint;
-    log.Method__c = method;
-    log.Request_Body__c = requestBody;
-    log.Status_Code__c = response.getStatusCode();
-    log.Response_Body__c = response.getBody();
-    log.Class_Name__c = className;
-    log.Success__c = success;
-    log.Type__c = typeVal;
-
-    insert log;
+    return res;
   }
 }
