@@ -1,0 +1,18 @@
+<template>
+    <div class="search-root">
+        <header class="search-header">
+            <h2>Results for</h2>
+            <h1>{heading}</h1>
+            <hr />
+        </header>
+
+        <div class="controls">
+            <c-search-box onsearch={handleSearch}></c-search-box>
+            <c-search-filters filters={availableFilters} onfilterchange={handleFilterChange}>
+            </c-search-filters>
+        </div>
+
+        <c-search-results results={results} loading={loading} onpagechange={handlePageChange}>
+        </c-search-results>
+    </div>
+</template>

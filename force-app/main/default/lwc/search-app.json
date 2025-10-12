@@ -1,0 +1,27 @@
+{
+  "searchEndpoint": "https://api.example.com/search",
+  "searchConfigEndpoint": "https://api.example.com/search/config",
+  "resultsPerPage": 24,
+  "defaultFilters": { "contentType": [], "product": [] },
+  "availableFilters": [
+    {
+      "id": "contentType",
+      "label": "Content Type",
+      "type": "multiselect",
+      "optionsEndpoint": "https://api.example.com/filters/contentType"
+    },
+    {
+      "id": "product",
+      "label": "Product",
+      "type": "multiselect",
+      "options": [
+        {"value":"sales","label":"Sales"},
+        {"value":"service","label":"Service"}
+      ]
+    }
+  ],
+  "ui": {
+    "showBadges": true,
+    "cardLayout": "large"
+  }
+}

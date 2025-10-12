@@ -1,0 +1,16 @@
+<template>
+    <div class="filters">
+        <template for:each={filters} for:item="f">
+            <div key={f.id} class="filter">
+                <label>{f.label}</label>
+                <template if:true={f.options}>
+                    <template for:each={f.options} for:item="opt">
+                        <label key={opt.value}><input type="checkbox" data-filter-id={f.id} value={opt.value}
+                                onchange={onCheckboxChange} /> {opt.label}</label>
+                    </template>
+                </template>
+                <!-- optionsEndpoint case: would fetch options on connectedCallback if needed -->
+            </div>
+        </template>
+    </div>
+</template>
