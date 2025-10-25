@@ -1,0 +1,27 @@
+<template>
+    <lightning-card title="Currency Exchange Rate" icon-name="utility:currency">
+        <div class="slds-p-around_medium">
+            <lightning-input label="Enter Base Currency (e.g., USD)" value={baseCurrency}
+                onchange={handleCurrencyChange}>
+            </lightning-input>
+
+            <lightning-button label="Get Exchange Rates" variant="brand" onclick={getRates} class="slds-m-top_small">
+            </lightning-button>
+        </div>
+
+        <template if:true={rates}>
+            <div class="slds-p-around_medium">
+                <h3><b>Base:</b> {baseCurrency}</h3>
+                <template for:each={rateEntries} for:item="r">
+                    <p key={r.key}>{r.key}: {r.value}</p>
+                </template>
+            </div>
+        </template>
+
+        <template if:true={error}>
+            <div class="slds-p-around_medium slds-text-color_error">
+                {error}
+            </div>
+        </template>
+    </lightning-card>
+</template>
